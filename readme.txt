@@ -1,0 +1,1 @@
+NOTE: the accounts of YouTube and Spotify are made on 13msokhi@gmail.com
