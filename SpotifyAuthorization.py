@@ -40,5 +40,19 @@ def get_token(client_id: str, client_secret: str, authorization_code: str, redir
     refresh_token = response['refresh_token']
     return SpotifyToken(access_token=access_token, expires_in=expires_in, refresh_token=refresh_token)
 
-def refresh_token(client_id: str, client_secret: str, refresh_token: str):
-    pass
+def refresh_token(client_id: str, client_secret: str, token: SpotifyToken) -> SpotifyToken: # token is the one that needs to be refreshed
+    params = {
+        'grant_type': 'refresh_token',
+        'refresh_token': token.get_refresh_token()
+    }
+    id_secret = f"{client_id}:{client_secret}"
+    base64_id_secret = str(base64.b64encode(id_secret.encode('utf-8')), 'utf-8')  # we need base64 encode string of format <client_id:client_secret>
+    header = {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Authorization': f'Basic {base64_id_secret}'
+    }
+    response = requests.post(url='https://accounts.spotify.com/api/token', headers=header, params=params)
+    access_token = response['access_token']
+    expires_in = response['expires_in']
+    refresh_token = response['refresh_token']
+    return SpotifyToken(access_token=access_token, expires_in=expires_in, refresh_token=refresh_token)
