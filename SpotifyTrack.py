@@ -1,8 +1,8 @@
 class SpotifyTrack:
-    def __init__(self, id: str, name: str, artist_ids: list[str]):
+    def __init__(self, id: str, name: str, artists: list[str]):
         self.id: str = id
         self.name: str = name
-        self.artist_ids: list[str] = artist_ids
+        self.artists: list[str] = artists
 
     def get_id(self) -> str:
         return self.id
@@ -16,8 +16,8 @@ class SpotifyTrack:
     def set_name(self, name: str):
         self.name = name
 
-    def get_artist_ids(self) -> list[str]:
-        return self.artist_ids
+    def get_artists(self) -> list[str]:
+        return self.artists
 
-    def set_artist_ids(self, artist_ids: list):
-        self.artist_ids = artist_ids
+    def set_artist_ids(self, artists: list):
+        self.artists = artists
