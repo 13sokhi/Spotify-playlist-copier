@@ -1,6 +1,7 @@
 class YouTubePlaylistItem:
-    def __init__(self, id: str, playlist_id: str, video_id: str):
+    def __init__(self, id: str, title: str, playlist_id: str, video_id: str):
         self.id: str = id
+        self.title = title
         self.playlist_id: str = playlist_id
         self.video_id: str = video_id
 
@@ -9,6 +10,12 @@ class YouTubePlaylistItem:
 
     def set_id(self, id):
         self.id = id
+
+    def get_title(self) -> str:
+        return self.title
+
+    def set_title(self, title: str):
+        self.title = title
 
     def get_playlist_id(self) -> str:
         return self.playlist_id
