@@ -4,9 +4,10 @@ from SpotifyToken import SpotifyToken
 from config import user_profile_endpoint
 import requests
 
-def get_user_id(access_token: SpotifyToken) -> str:
+def get_user_id(token: SpotifyToken) -> str:
+    access_token = token.get_access_token()
     header = {"Authorization": f"Bearer {access_token}"}
-    response = requests.get(url=user_profile_endpoint, headers=header)
+    response = requests.get(url="https://api.spotify.com/v1/me", headers=header) #403 error here
     user_id = response.json()['id']
     return user_id
 
@@ -49,8 +50,9 @@ def get_spotify_tracks(playlist_item_json: str) -> list[SpotifyTrack]:
     for playlist_item in playlist_items:
         id: str = playlist_item['track']['id']
         name: str = playlist_item['track']['name']
-        artists: list[str] = list([])
-        for artist in playlist_items['track']['artists']:
-            artists.append(artist)['name']
-        spotify_tracks.append(SpotifyTrack(id=id, name=name, artists=artists))
+        artists = playlist_item['track']['artists']
+        artist_names: list[str] = list([])
+        for artist in artists:
+            artist_names.append(artist['name'])
+        spotify_tracks.append(SpotifyTrack(id=id, name=name, artists=artist_names))
     return spotify_tracks
