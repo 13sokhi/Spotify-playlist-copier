@@ -5,6 +5,9 @@ import os
 import google_auth_oauthlib.flow
 import googleapiclient.discovery
 import googleapiclient.errors
+from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import InstalledAppFlow
+from google.auth.transport.requests import Request
 
 def verify_youtube_channel(channel_id: str, oauth_json_path: str) -> None:
     scopes = ["https://www.googleapis.com/auth/youtube.readonly"]
@@ -43,12 +46,33 @@ def get_playlists_json(channel_id: str, oauth_json_path: str) -> str:
     api_version = "v3"
     client_secrets_file = oauth_json_path
 
+    # Define the scope
+    SCOPES = ["https://www.googleapis.com/auth/youtube.force-ssl"]
+
+    # The path to your client_secret.json file
+
+    # Check if we have token.json to store the user's access and refresh tokens
+    creds = None
+    if os.path.exists("token.json"):
+        creds = Credentials.from_authorized_user_file("token.json", SCOPES)
+
+    # If there are no (valid) credentials available, let the user log in.
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            flow = InstalledAppFlow.from_client_secrets_file(client_secrets_file, SCOPES)
+            creds = flow.run_local_server()
+
+        # Save the credentials for the next run
+        with open("token.json", "w") as token:
+            token.write(creds.to_json())
+
     # Get credentials and create an API client
     flow = google_auth_oauthlib.flow.InstalledAppFlow.from_client_secrets_file(
         client_secrets_file, scopes)
-    credentials = flow.run_local_server()
     youtube = googleapiclient.discovery.build(
-        api_service_name, api_version, credentials=credentials)
+        api_service_name, api_version, credentials=creds)
 
     request = youtube.playlists().list(
         part="snippet,contentDetails",
@@ -86,12 +110,28 @@ def get_playlist_items_json(playlist: YouTubePlaylist, oauth_json_path: str) -> 
     api_version = "v3"
     client_secrets_file = oauth_json_path
 
-    # Get credentials and create an API client
-    flow = google_auth_oauthlib.flow.InstalledAppFlow.from_client_secrets_file(
-        client_secrets_file, scopes)
-    credentials = flow.run_local_server()
+    # Define the scope
+    SCOPES = ["https://www.googleapis.com/auth/youtube.force-ssl"]
+
+    # Check if we have token.json to store the user's access and refresh tokens
+    creds = None
+    if os.path.exists("token.json"):
+        creds = Credentials.from_authorized_user_file("token.json", SCOPES)
+
+    # If there are no (valid) credentials available, let the user log in.
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            flow = InstalledAppFlow.from_client_secrets_file(client_secrets_file, SCOPES)
+            creds = flow.run_local_server()
+
+        # Save the credentials for the next run
+        with open("token.json", "w") as token:
+            token.write(creds.to_json())
+
     youtube = googleapiclient.discovery.build(
-        api_service_name, api_version, credentials=credentials)
+        api_service_name, api_version, credentials=creds)
 
     request = youtube.playlistItems().list(
         part="snippet,contentDetails",
@@ -107,13 +147,12 @@ def get_youtube_playlist_items(playlist_items_json: str) -> list[YouTubePlaylist
     items = playlist_items_json['items']
 
     if len(items) == 0:
-        raise Exception('Playlist has NO Videos!')
+        return youtube_playlist_items
 
     for item in items:
-        id = item['id']
         title = item['snippet']['title']
-        playlist_id = item['playlistId']
-        video_id = item['resourceId']['videoId']
-        youtube_playlist_items.append(YouTubePlaylistItem(id, title, playlist_id, video_id))
+        playlist_id = item['snippet']['playlistId']
+        video_id = item['snippet']['resourceId']['videoId']
+        youtube_playlist_items.append(YouTubePlaylistItem(title, playlist_id, video_id))
 
     return youtube_playlist_items
