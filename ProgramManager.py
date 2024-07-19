@@ -6,16 +6,45 @@ import YouTubeDataAccess as yt_access
 import YouTubeDataUpdate as yt_update
 import TrackSearchAndDownload as downloader
 from SpotifyPlaylist import SpotifyPlaylist
+from SpotifyToken import SpotifyToken
 from SpotifyTrack import SpotifyTrack
 from YouTubePlaylist import YouTubePlaylist
-from YouTubePlaylistItem import YouTubePlaylistItem
 import time
+import json
 
 
 # Global variables
-authorization_code = auth.get_authorization_code(client_id=config.spotify_client_id, redirect_uri=config.spotify_redirect_uri)
-token = auth.get_token(client_id=config.spotify_client_id, client_secret=config.spotify_client_secret, authorization_code=authorization_code, redirect_uri=config.spotify_redirect_uri)
-channel_id = input('Enter YouTube ChannelID (settings -> Advanced settings): ')
+# authorization_code = auth.get_authorization_code(client_id=config.spotify_client_id, redirect_uri=config.spotify_redirect_uri)
+# token = auth.get_token(client_id=config.spotify_client_id, client_secret=config.spotify_client_secret, authorization_code=authorization_code, redirect_uri=config.spotify_redirect_uri)
+# channel_id = input('Enter YouTube ChannelID (settings -> Advanced settings): ')
+
+# Functions to get the spotify access token and YouTube ChannelId
+def get_spotify_access_token() -> SpotifyToken:
+    data = None
+    if os.path.exists('spotify_token.json'):
+        with open('spotify_token.json', 'r') as in_file:
+            data = json.loads(in_file.read()) # getting the saved string and converting it into dictionary
+            token = SpotifyToken(access_token=data['access_token'], refresh_token=data['refresh_token'], expires_in=data['expires_in'])
+
+    if not data or (time.time() > int(data['expires_in'])):
+        if not data:
+            authorization_code = auth.get_authorization_code(client_id=config.spotify_client_id, redirect_uri=config.spotify_redirect_uri)
+            token = auth.get_token(client_id=config.spotify_client_id, client_secret=config.spotify_client_secret, authorization_code=authorization_code, redirect_uri=config.spotify_redirect_uri)
+        elif time.time() > int(data['expires_at']):
+            token = auth.refresh_token(client_id=config.spotify_client_id, client_secret=config.spotify_client_secret, refresh_token=data['refresh_token'])
+
+        json_data = '{' + f'"access_token": "{token.get_access_token()}", "refresh_token": "{token.get_refresh_token()}", "expires_in": "{token.expires_in}", "expires_at": "{(round(time.time()) + int(token.get_expires_in()))}"' + '}'
+        with open('spotify_token.json', 'w') as out_file:
+            out_file.write(json_data)
+
+    return token
+
+def get_channel_id() -> str:
+    channel_id = input('Enter YouTube ChannelID (settings -> Advanced settings): ')
+    return channel_id
+
+token = get_spotify_access_token()
+channel_id = get_channel_id()
 
 # basic functions to retrieve data or perform required actions
 def get_spotify_playlists() -> list[SpotifyPlaylist]:

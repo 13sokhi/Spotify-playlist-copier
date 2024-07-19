@@ -156,6 +156,6 @@ def add_playlist_item(playlist: YouTubePlaylist, video_id: str, api_key: str) ->
             response = request.execute() # response has added video name in ['snippet']['title']
             return response
         except googleapiclient.errors.HttpError as e:
-            print('Re-trying copying...')
+            print('\tRe-trying copying...')
             continue
 
