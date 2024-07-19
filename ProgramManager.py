@@ -14,9 +14,8 @@ import json
 
 
 # Global variables
-# authorization_code = auth.get_authorization_code(client_id=config.spotify_client_id, redirect_uri=config.spotify_redirect_uri)
-# token = auth.get_token(client_id=config.spotify_client_id, client_secret=config.spotify_client_secret, authorization_code=authorization_code, redirect_uri=config.spotify_redirect_uri)
-# channel_id = input('Enter YouTube ChannelID (settings -> Advanced settings): ')
+token = None
+channel_id = ''
 
 # Functions to get the spotify access token and YouTube ChannelId
 def get_spotify_access_token() -> SpotifyToken:
@@ -43,10 +42,15 @@ def get_channel_id() -> str:
     channel_id = input('Enter YouTube ChannelID (settings -> Advanced settings): ')
     return channel_id
 
-token = get_spotify_access_token()
-channel_id = get_channel_id()
-
 # basic functions to retrieve data or perform required actions
+def set_spotify_token():
+    global token
+    token = get_spotify_access_token()
+
+def set_channel_id():
+    global channel_id
+    channel_id = get_channel_id()
+
 def get_spotify_playlists() -> list[SpotifyPlaylist]:
     user_id = sp_access.get_user_id(token)
     playlists_json = sp_access.get_playlists_json(user_id=user_id, token=token)
@@ -191,6 +195,23 @@ def start_program():
     run_main_loop()
 
 def run_main_loop():
+    while True:
+        inp = input('Change current user/ re-authenticate (y/n): ').lower()
+        match inp:
+            case 'y':
+                if os.path.exists('token.json'):
+                    os.remove('token.json')
+                if os.path.exists('spotify_token.json'):
+                    os.remove('spotify_token.json')
+                break
+            case 'n':
+                break
+            case _:
+                print('Invalid Input')
+
+    set_spotify_token()
+    set_channel_id()
+
     while True:
         print('\n' + '-'*50)
         print('0  -> Exit')
